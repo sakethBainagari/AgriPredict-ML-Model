@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AgriPredict - Crop Yield Prediction</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="https://img.icons8.com/color/48/null/wheat.png" type="image/x-icon">
+    <style>
+        :root {
+            --primary-color: #3D8361;
+            --secondary-color: #EEF2E6;
+            --accent-color: #D6CDA4;
+            --dark-color: #1C6758;
+            --light-color: #ffffff;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            position: relative;
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+        }
+        
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://images.unsplash.com/photo-1464226184884-fa280b87c399?q=80&w=1470&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            filter: blur(5px);
+            -webkit-filter: blur(5px);
+            z-index: -1;
+        }
+        
+        .header {
+            background-color: rgba(0,0,0,0.7);
+            padding: 1rem 0;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header h1 {
+            color: white;
+            font-size: 2.5rem;
+            margin: 0;
+            font-weight: 700;
+        }
+        
+        .logo-leaf {
+            color: #8BC34A;
+            margin-left: 10px;
+        }
+        
+        .prediction-card {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem auto;
+            max-width: 1000px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .card-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .card-header i {
+            margin-right: 10px;
+        }
+        
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -10px;
+        }
+        
+        .form-group {
+            flex: 0 0 50%;
+            padding: 10px;
+        }
+        
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .input-icon {
+            color: var(--primary-color);
+            width: 30px;
+            text-align: center;
+            margin-right: 10px;
+        }
+        
+        .form-control {
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            padding: 12px 15px;
+            font-size: 1rem;
+        }
+        
+        .form-control:focus {
+            box-shadow: 0 0 0 3px rgba(61, 131, 97, 0.25);
+            border-color: var(--primary-color);
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: #555;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .btn-predict {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            width: 100%;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .btn-predict:hover {
+            background-color: var(--dark-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .btn-predict i {
+            margin-right: 10px;
+        }
+        
+        .result-section {
+            background-color: var(--dark-color);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 2rem;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .result-value {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin: 1.5rem 0;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .form-group {
+                flex: 0 0 100%;
+            }
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: var(--primary-color);
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .chart-container {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        
+        .chart-bar-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .chart-label {
+            width: 120px;
+            text-align: right;
+            margin-right: 15px;
+            font-weight: 500;
+        }
+        
+        .chart-bar {
+            height: 30px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            position: relative;
+            transition: width 1.5s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+        }
+        
+        .average-bar {
+            width: 80%;
+            background-color: rgba(214, 205, 164, 0.7);
+        }
+        
+        .predicted-bar {
+            background-color: rgba(61, 131, 97, 0.8);
+        }
+        
+        .chart-value {
+            font-weight: 600;
+        }
+        
+        .recommendations {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .recommendation-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .recommendation-card {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            padding: 15px;
+            width: calc(50% - 15px);
+            text-align: left;
+            border-left: 4px solid;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .recommendation-card h5 {
+            font-size: 1rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .recommendation-card h5 i {
+            margin-right: 8px;
+        }
+        
+        .recommendation-card p {
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .recommendation-card {
+                width: 100%;
+            }
+        }
+        
+        .language-selector {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            z-index: 10;
+        }
+        
+        .language-btn {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            z-index: 100;
+        }
+        
+        .language-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .language-btn i {
+            margin-right: 5px;
+        }
+        
+        .language-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 180px;
+            display: none;
+            z-index: 100;
+        }
+        
+        .language-dropdown.show {
+            display: block;
+            animation: fadeInDown 0.3s ease-out;
+        }
+        
+        .language-option {
+            padding: 8px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        
+        .language-option:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .language-flag {
+            width: 20px;
+            margin-right: 8px;
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+        <h1>AgriPredict <i class="fas fa-leaf logo-leaf"></i></h1>
+        
+        <!-- Language Selector -->
+        <div class="language-selector">
+            <button class="language-btn" id="language-toggle">
+                <i class="fas fa-globe"></i> <span id="current-language">English</span>
+            </button>
+            <div class="language-dropdown" id="language-dropdown">
+                <div class="language-option" data-lang="en">
+                    <img src="https://cdn.jsdelivr.net/npm/flag-icon-css@3.5.0/flags/4x3/us.svg" class="language-flag" alt="English">
+                    English
+                </div>
+                <div class="language-option" data-lang="hi">
+                    <img src="https://cdn.jsdelivr.net/npm/flag-icon-css@3.5.0/flags/4x3/in.svg" class="language-flag" alt="Hindi">
+                    हिन्दी (Hindi)
+                </div>
+                <div class="language-option" data-lang="te">
+                    <img src="https://cdn.jsdelivr.net/npm/flag-icon-css@3.5.0/flags/4x3/in.svg" class="language-flag" alt="Telugu">
+                    తెలుగు (Telugu)
+                </div>
+                <div class="language-option" data-lang="ml">
+                    <img src="https://cdn.jsdelivr.net/npm/flag-icon-css@3.5.0/flags/4x3/in.svg" class="language-flag" alt="Malayalam">
+                    മലയാളം (Malayalam)
+                </div>
+                <div class="language-option" data-lang="kn">
+                    <img src="https://cdn.jsdelivr.net/npm/flag-icon-css@3.5.0/flags/4x3/in.svg" class="language-flag" alt="Kannada">
+                    ಕನ್ನಡ (Kannada)
+                </div>
+                <div class="language-option" data-lang="gu">
+                    <img src="https://cdn.jsdelivr.net/npm/flag-icon-css@3.5.0/flags/4x3/in.svg" class="language-flag" alt="Gujarati">
+                    ગુજરાતી (Gujarati)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="prediction-card">
+            <div class="card-header">
+                <i class="fas fa-seedling"></i> Crop Yield Prediction Tool
+            </div>
+
+            <p class="mb-4">
+                Enter the required information below to predict crop yields based on environmental factors and agricultural practices.
+            </p>
+
+            <form id="prediction-form" action="http://127.0.0.1:5000/predict" method="post">
+                <div class="form-row">
+    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-calendar input-icon"></i> Year
+                        </label>
+                        <input type="number" class="form-control" id="Year" name="Year" placeholder="e.g., 2023" value="2023">
+    </div>
+                    
+    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-cloud-rain input-icon"></i> Average Rainfall (mm/year)
+                        </label>
+                        <input type="number" class="form-control" id="average_rain_fall_mm_per_year" name="average_rain_fall_mm_per_year" placeholder="e.g., 1200">
+    </div>
+                    
+    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-spray-can input-icon"></i> Pesticides (tonnes)
+                        </label>
+                        <input type="number" class="form-control" id="pesticides_tonnes" name="pesticides_tonnes" placeholder="e.g., 50">
+    </div>
+                    
+    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-temperature-high input-icon"></i> Average Temperature (°C)
+                        </label>
+                        <input type="number" class="form-control" id="avg_temp" name="avg_temp" placeholder="e.g., 25">
+    </div>
+                    
+    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-map-marker-alt input-icon"></i> Country/Region
+                        </label>
+                        <input type="text" class="form-control" id="Area" name="Area" placeholder="e.g., India">
+    </div>
+                    
+    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-wheat-awn input-icon"></i> Crop Type
+                        </label>
+                        <input type="text" class="form-control" id="Item" name="Item" placeholder="e.g., Rice">
+                    </div>
+    </div>
+                
+                <button type="submit" class="btn btn-predict">
+                    <i class="fas fa-calculator"></i> Predict Yield
+                </button>
+</form>
+
+            <div id="loading" class="loading mt-4">
+                <div class="spinner"></div>
+                <p class="mt-2">Calculating prediction...</p>
+            </div>
+
+      {% if prediction %}
+            <div id="result-section" class="result-section">
+                <h3><i class="fas fa-chart-line"></i> Predicted Crop Yield</h3>
+                <div id="result-value" class="result-value" data-value="{{ prediction }}">{{ prediction }}</div>
+                <p>hectograms per hectare (hg/ha)</p>
+                
+                <!-- Data Visualization -->
+                <div class="chart-container mt-4">
+                    <h4 class="text-center mb-3">Yield Comparison</h4>
+                    <div class="chart-bar-container">
+                        <div class="chart-label">Average Yield</div>
+                        <div class="chart-bar average-bar">
+                            <span class="chart-value">3000</span>
+                        </div>
+                    </div>
+                    <div class="chart-bar-container mt-2">
+                        <div class="chart-label">Predicted Yield</div>
+                        <div class="chart-bar predicted-bar" id="predicted-bar">
+                            <span class="chart-value" id="chart-value">{{ prediction }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recommendations -->
+                <div class="recommendations mt-4">
+                    <h4 class="text-center mb-3">Recommendations</h4>
+                    <div class="recommendation-cards" id="recommendations-container">
+                        <!-- Recommendations will be added dynamically via JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="mt-3 text-start">
+                    <p class="mb-1">This prediction is based on:</p>
+                    <ul>
+                        <li>Climate conditions including rainfall and temperature</li>
+                        <li>Agricultural inputs such as pesticides</li>
+                        <li>Historical yield data for the selected region and crop</li>
+                    </ul>
+                </div>
+            </div>
+      {% endif %}
+            
+            <!-- Add multiple crop comparison feature -->
+            <div class="mt-4 text-center">
+                <button id="compare-crops-btn" class="btn btn-outline-success" style="display: none;">
+                    <i class="fas fa-sync-alt me-2"></i> Compare Different Crops
+                </button>
+                <div id="comparison-container" class="mt-3" style="display: none;">
+                    <!-- Comparison content will be added dynamically -->
+                </div>
+            </div>
+        </div>
+</div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const predictionForm = document.getElementById('prediction-form');
+            const loadingIndicator = document.getElementById('loading');
+            const resultSection = document.getElementById('result-section');
+            
+            if (predictionForm) {
+                predictionForm.addEventListener('submit', function(e) {
+                    // Show loading indicator
+                    if (loadingIndicator) {
+                        loadingIndicator.style.display = 'block';
+                    }
+                    
+                    // Hide previous results while loading
+                    if (resultSection) {
+                        resultSection.style.display = 'none';
+                    }
+                });
+            }
+            
+            // Animation for result value if present
+            const resultValue = document.getElementById('result-value');
+            if (resultValue) {
+                const targetValue = parseFloat(resultValue.getAttribute('data-value'));
+                animateValue(resultValue, 0, targetValue, 1500);
+                
+                // Set up the predicted bar width and animation
+                const predictedBar = document.getElementById('predicted-bar');
+                const chartValue = document.getElementById('chart-value');
+                if (predictedBar && chartValue) {
+                    // Animate chart value
+                    animateValue(chartValue, 0, targetValue, 1500);
+                    
+                    // Calculate percentage compared to average (3000)
+                    const percentage = Math.min((targetValue / 3000) * 80, 100);
+                    
+                    // Set initial width to 0 and then animate to final width
+                    predictedBar.style.width = '0%';
+                    setTimeout(() => {
+                        predictedBar.style.width = percentage + '%';
+                    }, 300);
+                    
+                    // Set bar color based on prediction
+                    if (targetValue > 3500) {
+                        predictedBar.style.backgroundColor = 'rgba(40, 167, 69, 0.8)'; // Good yield
+                    } else if (targetValue > 2500) {
+                        predictedBar.style.backgroundColor = 'rgba(61, 131, 97, 0.8)'; // Average yield
+                    } else {
+                        predictedBar.style.backgroundColor = 'rgba(255, 193, 7, 0.8)'; // Below average
+                    }
+                }
+                
+                // Generate recommendations based on prediction value
+                generateRecommendations(targetValue);
+                
+                // Show compare button
+                document.getElementById('compare-crops-btn').style.display = 'inline-block';
+            }
+            
+            // Function to generate recommendations
+            function generateRecommendations(yieldValue) {
+                const container = document.getElementById('recommendations-container');
+                if (!container) return;
+                
+                const cropType = document.getElementById('Item').value.trim() || 'crop';
+                const region = document.getElementById('Area').value.trim() || 'your region';
+                const rainfall = parseFloat(document.getElementById('average_rain_fall_mm_per_year').value) || 0;
+                const temperature = parseFloat(document.getElementById('avg_temp').value) || 0;
+                
+                const recommendations = [];
+                
+                // Based on yield prediction
+                if (yieldValue > 3500) {
+                    recommendations.push({
+                        title: 'Excellent Yield Potential',
+                        icon: 'trophy',
+                        content: `Your predicted ${cropType} yield is excellent for ${region}. Consider increasing planting area next season.`,
+                        color: '#28a745'
+                    });
+                } else if (yieldValue > 2500) {
+                    recommendations.push({
+                        title: 'Good Yield Potential',
+                        icon: 'thumbs-up',
+                        content: `Your ${cropType} yield is close to the regional average. Maintain current agricultural practices.`,
+                        color: '#3D8361'
+                    });
+                } else {
+                    recommendations.push({
+                        title: 'Below Average Yield',
+                        icon: 'exclamation-triangle',
+                        content: `Your predicted ${cropType} yield is below average. Consider the recommendations below to improve.`,
+                        color: '#ffc107'
+                    });
+                }
+                
+                // Based on rainfall
+                if (rainfall < 800) {
+                    recommendations.push({
+                        title: 'Low Rainfall Management',
+                        icon: 'tint-slash',
+                        content: 'Consider irrigation systems or drought-resistant crop varieties to overcome low rainfall conditions.',
+                        color: '#17a2b8'
+                    });
+                } else if (rainfall > 1500) {
+                    recommendations.push({
+                        title: 'High Rainfall Management',
+                        icon: 'cloud-rain',
+                        content: 'Implement proper drainage systems to prevent waterlogging and potential disease outbreaks.',
+                        color: '#17a2b8'
+                    });
+                }
+                
+                // Based on temperature
+                if (temperature > 30) {
+                    recommendations.push({
+                        title: 'Heat Stress Management',
+                        icon: 'temperature-high',
+                        content: 'Consider shade structures or adjust planting times to reduce heat stress on crops.',
+                        color: '#dc3545'
+                    });
+                } else if (temperature < 15) {
+                    recommendations.push({
+                        title: 'Cold Management',
+                        icon: 'temperature-low',
+                        content: 'Use cold-resistant varieties and protective measures like row covers during colder periods.',
+                        color: '#007bff'
+                    });
+                }
+                
+                // Create and append recommendation cards
+                container.innerHTML = '';
+                recommendations.forEach(rec => {
+                    const card = document.createElement('div');
+                    card.className = 'recommendation-card';
+                    card.style.borderLeftColor = rec.color;
+                    card.innerHTML = `
+                        <h5><i class="fas fa-${rec.icon}" style="color: ${rec.color}"></i> ${rec.title}</h5>
+                        <p>${rec.content}</p>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+            
+            // Crop comparison feature
+            const compareButton = document.getElementById('compare-crops-btn');
+            if (compareButton) {
+                compareButton.addEventListener('click', function() {
+                    const comparisonContainer = document.getElementById('comparison-container');
+                    if (comparisonContainer.style.display === 'none') {
+                        // Show comparison form
+                        comparisonContainer.style.display = 'block';
+                        comparisonContainer.innerHTML = `
+                            <div class="card mt-3 bg-light">
+                                <div class="card-body">
+                                    <h5>Compare with Different Crops</h5>
+                                    <div class="row g-3 mt-2">
+                                        <div class="col-md-4">
+                                            <input type="text" class="form-control" placeholder="Crop 1 (e.g., Rice)" id="crop1">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="text" class="form-control" placeholder="Crop 2 (e.g., Wheat)" id="crop2">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <button class="btn btn-success w-100" id="compare-btn">Compare Yields</button>
+                                        </div>
+                                    </div>
+                                    <div id="comparison-results" class="mt-3"></div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Add event listener to the compare button
+                        document.getElementById('compare-btn').addEventListener('click', function() {
+                            const crop1 = document.getElementById('crop1').value.trim();
+                            const crop2 = document.getElementById('crop2').value.trim();
+                            
+                            if (!crop1 || !crop2) {
+                                alert('Please enter both crop names');
+                                return;
+                            }
+                            
+                            // Mock comparison data (in a real app, this would come from an API)
+                            const resultsContainer = document.getElementById('comparison-results');
+                            resultsContainer.innerHTML = `
+                                <div class="alert alert-success">
+                                    <h6>Comparison Results:</h6>
+                                    <p>Based on your environmental conditions:</p>
+                                    <ul>
+                                        <li>${crop1}: Estimated yield 3,200 hg/ha</li>
+                                        <li>${crop2}: Estimated yield 2,800 hg/ha</li>
+                                    </ul>
+                                    <p class="mb-0"><strong>${crop1}</strong> may provide approximately 14% higher yield in your conditions.</p>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        // Hide comparison form
+                        comparisonContainer.style.display = 'none';
+                    }
+                });
+            }
+            
+            // Number animation function
+            function animateValue(element, start, end, duration) {
+                let startTimestamp = null;
+                
+                function step(timestamp) {
+                    if (!startTimestamp) startTimestamp = timestamp;
+                    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                    const currentValue = Math.floor(progress * (end - start) + start);
+                    element.textContent = currentValue.toLocaleString();
+                    
+                    if (progress < 1) {
+                        window.requestAnimationFrame(step);
+                    } else {
+                        element.textContent = end.toLocaleString();
+                    }
+                }
+                
+                window.requestAnimationFrame(step);
+            }
+            
+            // Language Translation Feature
+            const languageToggle = document.getElementById('language-toggle');
+            const languageDropdown = document.getElementById('language-dropdown');
+            const languageOptions = document.querySelectorAll('.language-option');
+            
+            // Language toggle dropdown
+            if (languageToggle) {
+                languageToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    languageDropdown.classList.toggle('show');
+                });
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!e.target.closest('.language-selector')) {
+                        languageDropdown.classList.remove('show');
+                    }
+                });
+            }
+            
+            // Define translations
+            const translations = {
+                en: {
+                    title: "Crop Yield Prediction Tool",
+                    description: "Enter the required information below to predict crop yields based on environmental factors and agricultural practices.",
+                    year: "Year",
+                    rainfall: "Average Rainfall (mm/year)",
+                    pesticides: "Pesticides (tonnes)",
+                    temperature: "Average Temperature (°C)",
+                    region: "Country/Region",
+                    cropType: "Crop Type",
+                    predictBtn: "Predict Yield",
+                    loadingText: "Calculating prediction...",
+                    predictedYield: "Predicted Crop Yield",
+                    yieldUnit: "hectograms per hectare (hg/ha)",
+                    basedOn: "This prediction is based on:",
+                    factor1: "Climate conditions including rainfall and temperature",
+                    factor2: "Agricultural inputs such as pesticides",
+                    factor3: "Historical yield data for the selected region and crop",
+                    compareBtn: "Compare Different Crops",
+                    yieldComparison: "Yield Comparison",
+                    averageYield: "Average Yield",
+                    predictedYieldLabel: "Predicted Yield",
+                    recommendations: "Recommendations"
+                },
+                hi: {
+                    title: "फसल उपज भविष्यवाणी उपकरण",
+                    description: "पर्यावरणीय कारकों और कृषि प्रथाओं के आधार पर फसल की उपज की भविष्यवाणी करने के लिए नीचे आवश्यक जानकारी दर्ज करें।",
+                    year: "वर्ष",
+                    rainfall: "औसत वर्षा (मिमी/वर्ष)",
+                    pesticides: "कीटनाशक (टन)",
+                    temperature: "औसत तापमान (°C)",
+                    region: "देश/क्षेत्र",
+                    cropType: "फसल प्रकार",
+                    predictBtn: "उपज की भविष्यवाणी करें",
+                    loadingText: "भविष्यवाणी की गणना...",
+                    predictedYield: "अनुमानित फसल उपज",
+                    yieldUnit: "हेक्टोग्राम प्रति हेक्टेयर (hg/ha)",
+                    basedOn: "यह भविष्यवाणी इस पर आधारित है:",
+                    factor1: "वर्षा और तापमान सहित जलवायु स्थितियां",
+                    factor2: "कीटनाशकों जैसे कृषि इनपुट",
+                    factor3: "चयनित क्षेत्र और फसल के लिए ऐतिहासिक उपज डेटा",
+                    compareBtn: "विभिन्न फसलों की तुलना करें",
+                    yieldComparison: "उपज तुलना",
+                    averageYield: "औसत उपज",
+                    predictedYieldLabel: "अनुमानित उपज",
+                    recommendations: "सिफारिशें"
+                },
+                te: {
+                    title: "పంట దిగుబడి అంచనా సాధనం",
+                    description: "పర్యావరణ అంశాలు మరియు వ్యవసాయ పద్ధతుల ఆధారంగా పంట దిగుబడిని అంచనా వేయడానికి దిగువ అవసరమైన సమాచారాన్ని నమోదు చేయండి.",
+                    year: "సంవత్సరం",
+                    rainfall: "సగటు వర్షపాతం (మి.మీ/సంవత్సరం)",
+                    pesticides: "పురుగుమందులు (టన్నులు)",
+                    temperature: "సగటు ఉష్ణోగ్రత (°C)",
+                    region: "దేశం/ప్రాంతం",
+                    cropType: "పంట రకం",
+                    predictBtn: "దిగుబడిని అంచనా వేయండి",
+                    loadingText: "అంచనా లెక్కించబడుత్తిదೆ...",
+                    predictedYield: "అంచనా వేసిన పంట దిగుబడి",
+                    yieldUnit: "హెక్టోగ్రామ్ లు ప్రతి హెక్టారుకు (hg/ha)",
+                    basedOn: "ఈ అంచనా దీనిపై ఆధారపడి ఉంది:",
+                    factor1: "వర్షపాతం మరియు ఉష్ణోగ్రత సహా వాతావరణ పరిస్థితులు",
+                    factor2: "పురుగుమందులు వంటి వ్యవసాయ ఇన్పుట్‌లు",
+                    factor3: "ఎంచుకున్న ప్రాంతం మత్తు పంట కోసం చారిత్రక దిగుబడి డేటా",
+                    compareBtn: "వివిధ పంటలను పోల్చండి",
+                    yieldComparison: "దిగుబడి పోలిక",
+                    averageYield: "సగటు దిగుబడి",
+                    predictedYieldLabel: "అంచనా వేసిన దిగుబడి",
+                    recommendations: "సిఫార్సులు"
+                },
+                ml: {
+                    title: "വിള വിളവ് പ്രവചന ഉപകരണം",
+                    description: "പരിസ്ഥിതി ഘടകങ്ങളുടെയും കാർഷിക രീതികളുടെയും അടിസ്ഥാനത്തിൽ വിള വിളവ് പ്രവചിക്കുന്നതിന് താഴെ ആവശ്യമായ വിവരങ്ങൾ നൽകുക.",
+                    year: "വർഷം",
+                    rainfall: "ശരാശരി മഴ (മിമി/വർഷം)",
+                    pesticides: "കീടനാശിനികൾ (ടൺ)",
+                    temperature: "ശരാശരി താപനില (°C)",
+                    region: "രാജ്യം/പ്രദേശം",
+                    cropType: "വിള തരം",
+                    predictBtn: "വിളവ് പ്രവചിക്കുക",
+                    loadingText: "പ്രവചനം കണക്കാക്കുന്നു...",
+                    predictedYield: "പ്രവചിച്ച വിള വിളവ്",
+                    yieldUnit: "ഹെക്ടോഗ്രാം പ്രതി ഹെക്ടർ (hg/ha)",
+                    basedOn: "ഈ പ്രവചനം ഇതിന്റെ അടിസ്ഥാനത്തിലാണ്:",
+                    factor1: "മഴയും താപനിലയും ഉൾപ്പെടെയുള്ള കാലാവസ്ഥ",
+                    factor2: "കീടനാശിനികൾ പോലുള്ള കാർഷിക ഉപകരണങ്ങൾ",
+                    factor3: "തിരഞ്ഞെടുത്ത പ്രദേശത്തിനും വിളയ്ക്കും വേണ്ടിയുള്ള ചരിത്രപരമായ വിളവ് ഡാറ്റ",
+                    compareBtn: "വിവിധ വിളകൾ താരതമ്യം ചെയ്യുക",
+                    yieldComparison: "വിളവ് താരതമ്യം",
+                    averageYield: "ശരാശരി വിളവ്",
+                    predictedYieldLabel: "പ്രവചിച്ച വിളവ്",
+                    recommendations: "ശുപാർശകൾ"
+                },
+                kn: {
+                    title: "ಬೆಳೆ ಇಳುವರಿ ಮುನ್ಸೂಚನೆ ಉಪಕರಣ",
+                    description: "ಪರಿಸರ ಅಂಶಗಳು ಮತ್ತು ಕೃಷಿ ಅಭ್ಯಾಸಗಳ ಆಧಾರದ ಮೇಲೆ ಬೆಳೆ ಇಳುವರಿಯನ್ನು ಮುನ್ಸೂಚಿಸಲು ಕೆಳಗಿನ ಅಗತ್ಯ ಮಾಹಿತಿಯನ್ನು ನಮೂದಿಸಿ.",
+                    year: "ವರ್ಷ",
+                    rainfall: "ಸರಾಸರಿ ಮಳೆ (ಮಿಮೀ/ವರ್ಷ)",
+                    pesticides: "ಕೀಟನಾಶಕಗಳು (ಟನ್ಗಳು)",
+                    temperature: "ಸರಾಸರಿ ತಾಪಮಾನ (°C)",
+                    region: "ದೇಶ/ಪ್ರದೇಶ",
+                    cropType: "ಬೆಳೆ ಪ್ರಕಾರ",
+                    predictBtn: "ಇಳುವರಿ ಊಹಿಸಿ",
+                    loadingText: "ಮುನ್ಸೂಚನೆ ಲೆಕ್ಕಾಚಾರ ಮಾಡಲಾಗುತ್ತಿದೆ...",
+                    predictedYield: "ಊಹಿಸಿದ ಬೆಳೆ ಇಳುವರಿ",
+                    yieldUnit: "ಹೆಕ್ಟೋಗ್ರಾಮ್ ಪ್ರತಿ ಹೆಕ್ಟೇರ್ (hg/ha)",
+                    basedOn: "ಈ ಮುನ್ಸೂಚನೆಯು ಇದರ ಮೇಲೆ ಆಧಾರಿತವಾಗಿದೆ:",
+                    factor1: "ಮಳೆ ಮತ್ತು ತಾಪಮಾನ ಸೇರಿದಂತೆ ಹವಾಮಾನ ಪರಿಸ್ಥಿತೆಗಳು",
+                    factor2: "ಕೀಟನಾಶಕಗಳಂತಹ ಕೃಷಿ ಒಳಾಂಶಗಳು",
+                    factor3: "ಆಯ್ದ ಪ್ರದೇಶ ಮತ್ತು ಬೆಳೆಗಾಗಿ ಐತಿಹಾಸಿಕ ಇಳುವರಿ ಡೇಟಾ",
+                    compareBtn: "ವಿವಿಧ ಬೆಳೆಗಳನ್ನು ಹೋಲಿಸಿ",
+                    yieldComparison: "ಇಳುವರಿ ಹೋಲಿಕೆ",
+                    averageYield: "ಸರಾಸರಿ ಇಳುವರಿ",
+                    predictedYieldLabel: "ಊಹಿಸಿದ ಇಳುವರಿ",
+                    recommendations: "ಶಿಫಾರಸುಗಳು"
+                },
+                gu: {
+                    title: "પાક ઉપજ આગાહી સાધન",
+                    description: "પર્યાવરણીય પરિબળો અને કૃષિ પદ્ધતિઓના આધારે પાક ઉપજની આગાહી કરવા માટે નીચે જરૂરી માહિતી દાખલ કરો.",
+                    year: "વર્ષ",
+                    rainfall: "સરેરાશ વરસાદ (મીમી/વર્ષ)",
+                    pesticides: "જંતુનાશકો (ટન)",
+                    temperature: "સરેરાશ તાપમાન (°C)",
+                    region: "દેશ/પ્રદેશ",
+                    cropType: "પાક પ્રકાર",
+                    predictBtn: "ઉપજ આગાહી કરો",
+                    loadingText: "આગાહીની ગણતરી કરી રહ્યાં છીએ...",
+                    predictedYield: "આગાહી કરેલ પાક ઉપજ",
+                    yieldUnit: "હેક્ટોગ્રામ પ્રતિ હેક્ટર (hg/ha)",
+                    basedOn: "આ આગાહી આના પર આધારિત છે:",
+                    factor1: "વરસાદ અને તાપમાન સહિતની આબોહવા પરિસ્થિતિઓ",
+                    factor2: "જંતુનાશકો જેવા કૃષિ ઇનપુટ્સ",
+                    factor3: "પસંદ કરેલા પ્રદેશ અને પાક માટે ઐતિહાસિક ઉપજ ડેટા",
+                    compareBtn: "વિવિધ પાકોની તુલના કરો",
+                    yieldComparison: "ઉપજ તુલના",
+                    averageYield: "સરેરાશ ઉપજ",
+                    predictedYieldLabel: "આગાહી કરેલ ઉપજ",
+                    recommendations: "ભલામણો"
+                }
+            };
+            
+            // Language selection handling
+            languageOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const lang = this.getAttribute('data-lang');
+                    changeLanguage(lang);
+                    
+                    // Update current language display
+                    document.getElementById('current-language').textContent = this.textContent.trim();
+                    
+                    // Hide dropdown
+                    languageDropdown.classList.remove('show');
+                });
+            });
+            
+            // Language change function
+            function changeLanguage(lang) {
+                if (!translations[lang]) return;
+                
+                const trans = translations[lang];
+                
+                // Update text contents
+                document.querySelector('.card-header').innerHTML = `<i class="fas fa-seedling"></i> ${trans.title}`;
+                document.querySelector('.card-header + p').textContent = trans.description;
+                
+                // Update form labels
+                const labels = document.querySelectorAll('.form-label');
+                if (labels.length >= 6) {
+                    labels[0].innerHTML = `<i class="fas fa-calendar input-icon"></i> ${trans.year}`;
+                    labels[1].innerHTML = `<i class="fas fa-cloud-rain input-icon"></i> ${trans.rainfall}`;
+                    labels[2].innerHTML = `<i class="fas fa-spray-can input-icon"></i> ${trans.pesticides}`;
+                    labels[3].innerHTML = `<i class="fas fa-temperature-high input-icon"></i> ${trans.temperature}`;
+                    labels[4].innerHTML = `<i class="fas fa-map-marker-alt input-icon"></i> ${trans.region}`;
+                    labels[5].innerHTML = `<i class="fas fa-wheat-awn input-icon"></i> ${trans.cropType}`;
+                }
+                
+                // Update button text
+                const predictButton = document.querySelector('.btn-predict');
+                if (predictButton) {
+                    predictButton.innerHTML = `<i class="fas fa-calculator"></i> ${trans.predictBtn}`;
+                }
+                
+                // Update loading text
+                const loadingText = document.querySelector('#loading p');
+                if (loadingText) {
+                    loadingText.textContent = trans.loadingText;
+                }
+                
+                // Update result section if present
+                const resultSection = document.getElementById('result-section');
+                if (resultSection) {
+                    // Update headers and labels
+                    const resultHeaders = resultSection.querySelectorAll('h3, h4');
+                    if (resultHeaders.length >= 3) {
+                        resultHeaders[0].innerHTML = `<i class="fas fa-chart-line"></i> ${trans.predictedYield}`;
+                        resultHeaders[1].textContent = trans.yieldComparison;
+                        resultHeaders[2].textContent = trans.recommendations;
+                    }
+                    
+                    // Update chart labels
+                    const chartLabels = resultSection.querySelectorAll('.chart-label');
+                    if (chartLabels.length >= 2) {
+                        chartLabels[0].textContent = trans.averageYield;
+                        chartLabels[1].textContent = trans.predictedYieldLabel;
+                    }
+                    
+                    // Update unit text
+                    const unitText = resultSection.querySelector('h3 + div + p');
+                    if (unitText) {
+                        unitText.textContent = trans.yieldUnit;
+                    }
+                    
+                    // Update factors text
+                    const factorsText = resultSection.querySelector('.mt-3.text-start p');
+                    if (factorsText) {
+                        factorsText.textContent = trans.basedOn;
+                    }
+                    
+                    // Update factors list
+                    const factorsList = resultSection.querySelectorAll('.mt-3.text-start ul li');
+                    if (factorsList.length >= 3) {
+                        factorsList[0].textContent = trans.factor1;
+                        factorsList[1].textContent = trans.factor2;
+                        factorsList[2].textContent = trans.factor3;
+                    }
+                }
+                
+                // Update compare button if present
+                const compareButton = document.getElementById('compare-crops-btn');
+                if (compareButton) {
+                    compareButton.innerHTML = `<i class="fas fa-sync-alt me-2"></i> ${trans.compareBtn}`;
+                }
+            }
+        });
+    </script>
+  </body>
+</html>
